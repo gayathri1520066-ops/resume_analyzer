@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Analyze Resume - ResumeAI{% endblock %}
+
+{% block content %}
+
+{% if analysis_complete %}
+    <!-- Results Section -->
+    <div style="animation: fadeIn 0.5s ease-in;">
+        <!-- Success Message -->
+        <div class="alert alert-success" style="text-align: center;">
+            ✓ Resume analyzed successfully! Smart insights generated.
+        </div>
+
+        <!-- Main Results Card -->
+        <div class="card" style="margin-bottom: var(--spacing-lg);">
+            <div class="card-header">
+                <h2>{{ candidate_name or "Candidate" }}</h2>
+                <p style="margin: 0; color: var(--gray-600); font-size: var(--text-sm);">
+                    {% if email %}{{ email }}{% endif %}
+                    {% if phone %} • {{ phone }}{% endif %}
+                    {% if location %} • {{ location }}{% endif %}
+                </p>
+            </div>
+
+            <div class="card-body">
+                <!-- Match Score Section -->
+                <div style="text-align: center; padding: var(--spacing-lg) 0; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border-radius: var(--radius-xl); margin-bottom: var(--spacing-lg);">
+                    <div style="font-size: 48px; font-weight: 700; margin-bottom: var(--spacing-sm);">{{ match_score|int }}%</div>
+                    <div style="font-size: 18px; font-weight: 500;">Overall Match Score</div>
+                    <div style="font-size: 14px; opacity: 0.9; margin-top: var(--spacing-xs);">
+                        {% if match_score >= 90 %}Excellent Fit
+                        {% elif match_score >= 75 %}Good Fit
+                        {% elif match_score >= 60 %}Moderate Fit
+                        {% else %}Poor Fit{% endif %}
+                    </div>
+                </div>
+
+                <!-- Info Grid -->
+                <div class="grid-2">
+                    {% if education %}
+                    <div class="card" style="background-color: var(--gray-50);">
+                        <h4 style="margin-top: 0;">Education</h4>
+                        <p style="margin: 0; font-size: var(--text-sm); color: var(--gray-700);">{{ education }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if degree %}
+                    <div class="card" style="background-color: var(--gray-50);">
+                        <h4 style="margin-top: 0;">Degree</h4>
+                        <p style="margin: 0; font-size: var(--text-sm); color: var(--gray-700);">{{ degree }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if graduation_year %}
+                    <div class="card" style="background-color: var(--gray-50);">
+                        <h4 style="margin-top: 0;">Graduation Year</h4>
+                        <p style="margin: 0; font-size: var(--text-sm); color: var(--gray-700);">{{ graduation_year }}</p>
+                    </div>
+                    {% endif %}
+
+                    {% if primary_role %}
+                    <div class="card" style="background-color: var(--gray-50);">
+                        <h4 style="margin-top: 0;">Recommended Role</h4>
+                        <p style="margin: 0; font-size: var(--text-sm);">
+                            <span class="badge badge-primary">{{ primary_role }}</span>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Skills Section -->
+                {% if skills %}
+                <div style="margin-top: var(--spacing-lg);">
+                    <h4>Skills</h4>
+                    <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+                        {% for skill in skills.split(',') %}
+                            <span class="tag">{{ skill.strip() }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- Skill Strengths -->
+                {% if skill_strengths %}
+                <div style="margin-top: var(--spacing-lg);">
+                    <h4>✓ Skill Strengths</h4>
+                    <ul style="margin: 0; padding-left: var(--spacing-lg); color: var(--success);">
+                        {% for strength in skill_strengths %}
+                            <li>{{ strength }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Skill Gaps -->
+                {% if skill_gaps %}
+                <div style="margin-top: var(--spacing-lg);">
+                    <h4 style="color: var(--warning);">⚠ Skill Gaps</h4>
+                    <ul style="margin: 0; padding-left: var(--spacing-lg); color: var(--gray-700);">
+                        {% for gap in skill_gaps %}
+                            <li><strong>{{ gap }}</strong> - Recommended to acquire</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+
+                <!-- Resume Suggestions -->
+                {% if resume_suggestions %}
+                <div style="margin-top: var(--spacing-lg);">
+                    <h4>💡 Resume Improvement Suggestions</h4>
+                    {% for suggestion in resume_suggestions %}
+                    <div class="alert 
+                        {% if suggestion.type == 'success' %}alert-success
+                        {% elif suggestion.type == 'warning' %}alert-warning
+                        {% else %}alert-info{% endif %}" 
+                        style="margin-bottom: var(--spacing-sm);">
+                        {{ suggestion.message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                <!-- Top Roles -->
+                {% if all_roles %}
+                <div style="margin-top: var(--spacing-lg);">
+                    <h4>Recommended Roles</h4>
+                    <div class="grid-2">
+                        {% for role in all_roles[:5] %}
+                        <div class="card" style="background-color: var(--gray-50);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <h5 style="margin: 0;">{{ role.role }}</h5>
+                                <span class="badge badge-primary">{{ role.score|int }}%</span>
+                            </div>
+                            {% if role.matching_skills %}
+                            <p style="margin: 0; font-size: var(--text-sm); color: var(--gray-600); margin-top: var(--spacing-xs);">
+                                Match: {{ role.matching_skills|join(', ') }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="card-footer">
+                {% if candidate_id %}
+                <a href="/candidate/{{ candidate_id }}" class="btn btn-primary">View Full Profile</a>
+                {% endif %}
+                <a href="/" class="btn btn-secondary">Analyze Another Resume</a>
+            </div>
+        </div>
+
+        <!-- CTA to Candidates -->
+        <div style="text-align: center; padding: var(--spacing-xl); background: linear-gradient(135deg, #dbeafe, #e0e7ff); border-radius: var(--radius-xl);">
+            <h3 style="margin-top: 0;">Want to see all candidates?</h3>
+            <a href="/candidates" class="btn btn-primary btn-large">View All Candidates</a>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Upload Section -->
+    <div style="max-width: 800px; margin: 0 auto;">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: var(--spacing-2xl);">
+            <h1 style="margin-bottom: var(--spacing-md);">📄 Smart Resume Analysis</h1>
+            <p style="font-size: var(--text-lg); color: var(--gray-600); margin: 0;">
+                Upload a resume and get instant AI-powered insights on role matching, skill gaps, and improvement suggestions.
+            </p>
+        </div>
+
+        <!-- Features -->
+        <div class="grid-3" style="margin-bottom: var(--spacing-2xl);">
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 36px; margin-bottom: var(--spacing-md);">📊</div>
+                <h4>Resume Parsing</h4>
+                <p style="font-size: var(--text-sm); margin: 0;">Extract key information automatically from any PDF resume</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 36px; margin-bottom: var(--spacing-md);">🎯</div>
+                <h4>Role Matching</h4>
+                <p style="font-size: var(--text-sm); margin: 0;">Intelligent matching against 8+ professional roles</p>
+            </div>
+            <div class="card" style="text-align: center;">
+                <div style="font-size: 36px; margin-bottom: var(--spacing-md);">⚡</div>
+                <h4>Skill Analysis</h4>
+                <p style="font-size: var(--text-sm); margin: 0;">Identify strengths and gaps with recommendations</p>
+            </div>
+        </div>
+
+        <!-- Upload Form -->
+        <form method="POST" action="/analyze" enctype="multipart/form-data" id="uploadForm">
+            <div class="card" style="border: 2px dashed var(--primary); padding: var(--spacing-2xl); text-align: center;">
+                <div id="dropZone" style="cursor: pointer;">
+                    <div style="font-size: 48px; margin-bottom: var(--spacing-md);">📁</div>
+                    <h3 style="margin-bottom: var(--spacing-sm); color: var(--primary);">Drag & Drop PDF Here</h3>
+                    <p style="color: var(--gray-600); margin-bottom: var(--spacing-lg);">Or click to select a resume PDF (Max 5MB)</p>
+                    
+                    <input type="file" id="resumeFile" name="resume" accept=".pdf" required style="display: none;">
+                    <button type="button" onclick="document.getElementById('resumeFile').click();" class="btn btn-primary btn-large">
+                        📤 Choose PDF
+                    </button>
+
+                    <p id="fileName" style="margin-top: var(--spacing-md); color: var(--success); font-weight: 500; display: none;"></p>
+                </div>
+            </div>
+
+            <div style="text-align: center; margin-top: var(--spacing-lg);">
+                <button type="submit" id="analyzeBtn" class="btn btn-primary btn-large" disabled style="opacity: 0.5;">
+                    🔍 Analyze Resume
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        #dropZone.dragover {
+            background-color: var(--info-light);
+        }
+
+        input[type="file"]:focus + label {
+            outline: none;
+        }
+    </style>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const resumeFile = document.getElementById('resumeFile');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const fileName = document.getElementById('fileName');
+        const uploadForm = document.getElementById('uploadForm');
+
+        // Drag and drop
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.parentElement.classList.add('dragover');
+            dropZone.parentElement.style.backgroundColor = 'var(--info-light)';
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.parentElement.classList.remove('dragover');
+            dropZone.parentElement.style.backgroundColor = '';
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.parentElement.classList.remove('dragover');
+            dropZone.parentElement.style.backgroundColor = '';
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                resumeFile.files = files;
+                updateFileName(files[0].name);
+            }
+        });
+
+        // File input change
+        resumeFile.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileName(e.target.files[0].name);
+            }
+        });
+
+        function updateFileName(name) {
+            fileName.textContent = '✓ ' + name + ' selected';
+            fileName.style.display = 'block';
+            analyzeBtn.disabled = false;
+            analyzeBtn.style.opacity = '1';
+        }
+
+        // Form submission
+        uploadForm.addEventListener('submit', (e) => {
+            analyzeBtn.innerHTML = '⏳ Analyzing...';
+            analyzeBtn.disabled = true;
+        });
+    </script>
+{% endif %}
+
+{% endblock %}

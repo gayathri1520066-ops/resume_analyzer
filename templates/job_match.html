@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}Job Match - ResumeAI{% endblock %}
+
+{% block content %}
+
+<h1>🎯 Job Description Matching</h1>
+<p style="color: var(--gray-600); font-size: var(--text-lg);">
+    Match a candidate's resume against a job description to assess fit and identify skill gaps.
+</p>
+
+<!-- Input Section -->
+<div class="card" style="margin-bottom: var(--spacing-2xl);">
+    <div class="card-header">
+        <h3 style="margin: 0;">Match Candidate to Job</h3>
+    </div>
+    <div class="card-body">
+        <form id="jobMatchForm" style="display: grid; gap: var(--spacing-lg);">
+            <!-- Candidate Selection -->
+            <div>
+                <label class="form-label required">Select Candidate</label>
+                <select id="candidateSelect" name="candidate_id" required style="width: 100%;">
+                    <option value="">-- Choose a candidate --</option>
+                    <!-- This would be populated dynamically in a real app -->
+                </select>
+                <p style="font-size: var(--text-sm); color: var(--gray-600); margin-top: var(--spacing-sm); margin-bottom: 0;">
+                    💡 Tip: Upload a resume first if you haven't already
+                </p>
+            </div>
+
+            <!-- Job Description -->
+            <div>
+                <label class="form-label required">Job Description</label>
+                <textarea id="jobDescription" name="job_description" required 
+                          placeholder="Paste the job description here (e.g., Required skills, responsibilities, qualifications, etc.)..."
+                          style="width: 100%; min-height: 200px;"></textarea>
+            </div>
+
+            <!-- Submit -->
+            <div style="display: flex; gap: var(--spacing-md);">
+                <button type="submit" class="btn btn-primary btn-large" id="matchBtn">
+                    🔍 Analyze Match
+                </button>
+                <button type="reset" class="btn btn-secondary btn-large">Clear Form</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results Section (Initially Hidden) -->
+<div id="resultsSection" style="display: none;">
+    <!-- Match Score -->
+    <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div style="text-align: center; padding: var(--spacing-2xl); background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border-radius: var(--radius-xl);">
+            <div style="font-size: 64px; font-weight: 700; margin-bottom: var(--spacing-sm);" id="matchScore">0%</div>
+            <div style="font-size: 18px; font-weight: 500;" id="matchStatus">Analyzing...</div>
+            <div style="font-size: 14px; opacity: 0.9; margin-top: var(--spacing-md);" id="matchDescription">
+                This candidate has skills that align well with the job requirements.
+            </div>
+        </div>
+    </div>
+
+    <!-- Matching Skills -->
+    <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div class="card-header">
+            <h3 style="margin: 0; color: var(--success);">✓ Matching Skills</h3>
+        </div>
+        <div class="card-body" id="matchingSkillsContainer">
+            <div class="spinner" style="margin: 0 auto;"></div>
+        </div>
+    </div>
+
+    <!-- Missing Skills -->
+    <div class="card" style="margin-bottom: var(--spacing-lg);">
+        <div class="card-header">
+            <h3 style="margin: 0; color: var(--warning);">⚠ Missing Skills</h3>
+        </div>
+        <div class="card-body" id="missingSkillsContainer">
+            <div class="spinner" style="margin: 0 auto;"></div>
+        </div>
+    </div>
+
+    <!-- Recommendation -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0;">📋 Recommendation</h3>
+        </div>
+        <div class="card-body" id="recommendationContainer">
+            <div class="spinner" style="margin: 0 auto;"></div>
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div style="text-align: center; margin-top: var(--spacing-2xl); display: flex; gap: var(--spacing-md); justify-content: center;">
+        <button onclick="document.getElementById('resultsSection').style.display='none'; document.getElementById('jobMatchForm').style.display='grid';" 
+                class="btn btn-secondary btn-large">⬅ Back to Form</button>
+        <a href="/candidates" class="btn btn-primary btn-large">👥 View All Candidates</a>
+    </div>
+</div>
+
+<style>
+    .skill-tag {
+        display: inline-block;
+        padding: 8px 12px;
+        border-radius: var(--radius-full);
+        font-size: var(--text-sm);
+        margin-right: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+
+    .skill-match {
+        background-color: var(--success-light);
+        color: var(--success);
+    }
+
+    .skill-missing {
+        background-color: var(--warning-light);
+        color: var(--warning);
+    }
+</style>
+
+<script>
+    // Load candidates (simplified - in production, would load from database)
+    function loadCandidates() {
+        const select = document.getElementById('candidateSelect');
+        // This would fetch from /api/candidates endpoint in a full implementation
+        select.innerHTML += '<option value="1">Sample Candidate</option>';
+    }
+
+    // Handle form submission
+    document.getElementById('jobMatchForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const candidateId = document.getElementById('candidateSelect').value;
+        const jobDescription = document.getElementById('jobDescription').value;
+        
+        if (!candidateId || !jobDescription) {
+            alert('Please select a candidate and enter a job description.');
+            return;
+        }
+
+        document.getElementById('matchBtn').disabled = true;
+        document.getElementById('matchBtn').innerHTML = '⏳ Analyzing...';
+
+        try {
+            const response = await fetch('/api/job-match', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    candidate_id: parseInt(candidateId),
+                    job_description: jobDescription
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to match job description');
+            }
+
+            const data = await response.json();
+            displayResults(data);
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            document.getElementById('matchBtn').disabled = false;
+            document.getElementById('matchBtn').innerHTML = '🔍 Analyze Match';
+        }
+    });
+
+    function displayResults(data) {
+        // Display score
+        const score = data.match_score;
+        document.getElementById('matchScore').textContent = score + '%';
+        
+        if (score >= 85) {
+            document.getElementById('matchStatus').textContent = 'Excellent Match! ⭐⭐⭐';
+            document.getElementById('matchDescription').textContent = 'The candidate is a strong fit for this position.';
+        } else if (score >= 70) {
+            document.getElementById('matchStatus').textContent = 'Good Match ⭐⭐';
+            document.getElementById('matchDescription').textContent = 'The candidate has most required skills.';
+        } else if (score >= 50) {
+            document.getElementById('matchStatus').textContent = 'Moderate Match ⭐';
+            document.getElementById('matchDescription').textContent = 'The candidate has some relevant skills but there are gaps.';
+        } else {
+            document.getElementById('matchStatus').textContent = 'Poor Match';
+            document.getElementById('matchDescription').textContent = 'The candidate may need training for this role.';
+        }
+
+        // Display matching skills
+        const matchingSkillsHtml = data.matching_skills.length > 0 
+            ? data.matching_skills.map(skill => `<span class="skill-tag skill-match">✓ ${skill}</span>`).join('')
+            : '<p style="color: var(--gray-500);">No matching skills found.</p>';
+        document.getElementById('matchingSkillsContainer').innerHTML = matchingSkillsHtml;
+
+        // Display missing skills
+        const missingSkillsHtml = data.missing_skills.length > 0 
+            ? data.missing_skills.map(skill => `<span class="skill-tag skill-missing">✕ ${skill}</span>`).join('')
+            : '<p style="color: var(--success);">No critical skills missing!</p>';
+        document.getElementById('missingSkillsContainer').innerHTML = missingSkillsHtml;
+
+        // Display recommendation
+        document.getElementById('recommendationContainer').innerHTML = `<p>${data.recommendation}</p>`;
+
+        // Show results section
+        document.getElementById('jobMatchForm').style.display = 'none';
+        document.getElementById('resultsSection').style.display = 'block';
+        
+        // Scroll to results
+        document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Load candidates on page load
+    loadCandidates();
+</script>
+
+{% endblock %}

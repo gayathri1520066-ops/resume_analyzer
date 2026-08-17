@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - ResumeAI{% endblock %}
+
+{% block content %}
+
+<h1>📊 Recruitment Analytics Dashboard</h1>
+
+<!-- Statistics Cards -->
+<div class="grid-4" style="margin-bottom: var(--spacing-2xl);">
+    <div class="card" style="text-align: center; border-left: 4px solid var(--primary);">
+        <div style="font-size: 36px; font-weight: 700; color: var(--primary); margin-bottom: var(--spacing-sm);">
+            {{ stats.total_candidates or 0 }}
+        </div>
+        <div style="color: var(--gray-600); font-weight: 500;">Total Candidates</div>
+    </div>
+
+    <div class="card" style="text-align: center; border-left: 4px solid var(--success);">
+        <div style="font-size: 36px; font-weight: 700; color: var(--success); margin-bottom: var(--spacing-sm);">
+            {{ stats.avg_score|int or 0 }}%
+        </div>
+        <div style="color: var(--gray-600); font-weight: 500;">Average Score</div>
+    </div>
+
+    <div class="card" style="text-align: center; border-left: 4px solid var(--info);">
+        <div style="font-size: 24px; font-weight: 700; color: var(--info); margin-bottom: var(--spacing-sm);">
+            {{ stats.top_role or "—" }}
+        </div>
+        <div style="color: var(--gray-600); font-weight: 500;">Top Role</div>
+    </div>
+
+    <div class="card" style="text-align: center; border-left: 4px solid var(--warning);">
+        <div style="font-size: 36px; font-weight: 700; color: var(--warning); margin-bottom: var(--spacing-sm);">
+            {{ stats.recent_count or 0 }}
+        </div>
+        <div style="color: var(--gray-600); font-weight: 500;">This Week</div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="grid-2" style="margin-bottom: var(--spacing-2xl);">
+    <!-- Role Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0;">Role Distribution</h3>
+        </div>
+        <div class="card-body">
+            {% if stats.role_distribution %}
+                <table style="width: 100%;">
+                    <tbody>
+                        {% for role, count in stats.role_distribution.items() %}
+                        <tr>
+                            <td style="padding: var(--spacing-sm) 0;">
+                                <strong>{{ role }}</strong>
+                            </td>
+                            <td style="text-align: right; padding: var(--spacing-sm) 0;">
+                                <span class="badge badge-primary">{{ count }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p style="text-align: center; color: var(--gray-500);">No data available</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Score Distribution -->
+    <div class="card">
+        <div class="card-header">
+            <h3 style="margin: 0;">Score Distribution</h3>
+        </div>
+        <div class="card-body">
+            {% if stats.score_distribution %}
+                {% for category, count in stats.score_distribution.items() %}
+                <div style="margin-bottom: var(--spacing-md);">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: var(--spacing-sm);">
+                        <span><strong>{{ category }}</strong></span>
+                        <span>{{ count }}</span>
+                    </div>
+                    <div class="progress">
+                        {% set max_count = stats.score_distribution.values()|max %}
+                        {% set percent = (count / max_count * 100) if max_count > 0 else 0 %}
+                        <div class="progress-bar {% if 'Excellent' in category %}success{% elif 'Good' in category %}{% elif 'Moderate' in category %}warning{% else %}error{% endif %}" 
+                             style="width: {{ percent }}%;">
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p style="text-align: center; color: var(--gray-500);">No data available</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Recent Candidates -->
+<div class="card">
+    <div class="card-header">
+        <h3 style="margin: 0;">Recent Candidates</h3>
+    </div>
+    <div class="card-body">
+        {% if stats.recent_candidates %}
+            <table style="width: 100%; border-collapse: collapse; font-size: var(--text-sm);">
+                <thead>
+                    <tr>
+                        <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Name</th>
+                        <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Email</th>
+                        <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Role</th>
+                        <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Match Score</th>
+                        <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for candidate in stats.recent_candidates %}
+                    <tr style="border-bottom: 1px solid var(--gray-200);">
+                        <td style="padding: var(--spacing-md);"><strong>{{ candidate[1] or "—" }}</strong></td>
+                        <td style="padding: var(--spacing-md);">{{ candidate[2] or "—" }}</td>
+                        <td style="padding: var(--spacing-md);">
+                            {% if candidate[11] %}
+                            <span class="badge badge-primary">{{ candidate[11] }}</span>
+                            {% else %}
+                            <span style="color: var(--gray-500);">—</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: var(--spacing-md);">
+                            {% set score = candidate[12] or 0 %}
+                            <span class="badge 
+                                {% if score >= 90 %}badge-success
+                                {% elif score >= 75 %}badge-primary
+                                {% elif score >= 60 %}badge-warning
+                                {% else %}badge-error{% endif %}">
+                                {{ score|int }}%
+                            </span>
+                        </td>
+                        <td style="padding: var(--spacing-md);">
+                            <a href="/candidate/{{ candidate[0] }}" class="btn btn-small btn-secondary">View</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <div style="text-align: center; padding: var(--spacing-xl); color: var(--gray-500);">
+                <p>No candidates yet. Upload your first resume to get started!</p>
+                <a href="/" class="btn btn-primary" style="margin-top: var(--spacing-lg);">Upload Resume</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

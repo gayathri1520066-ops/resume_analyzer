@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+
+{% block title %}Error - ResumeAI{% endblock %}
+
+{% block content %}
+
+<div style="max-width: 600px; margin: 0 auto; text-align: center; padding: var(--spacing-2xl);">
+    <div style="font-size: 72px; margin-bottom: var(--spacing-lg);">❌</div>
+    
+    <h1 style="color: var(--error);">Oops! Something Went Wrong</h1>
+    
+    {% if error %}
+    <div class="alert alert-error" style="text-align: left; margin-bottom: var(--spacing-lg);">
+        {{ error }}
+    </div>
+    {% endif %}
+
+    <p style="color: var(--gray-600); font-size: var(--text-lg); margin-bottom: var(--spacing-2xl);">
+        We encountered an unexpected error. Please try again or contact support if the problem persists.
+    </p>
+
+    <div style="display: flex; gap: var(--spacing-md); justify-content: center; flex-wrap: wrap;">
+        <a href="/" class="btn btn-primary btn-large">🏠 Go to Home</a>
+        <a href="/candidates" class="btn btn-secondary btn-large">👥 View Candidates</a>
+    </div>
+
+    <div style="margin-top: var(--spacing-2xl); padding-top: var(--spacing-2xl); border-top: 1px solid var(--gray-300);">
+        <p style="color: var(--gray-500); font-size: var(--text-sm);">
+            Error ID: {{ request.environ.get('REMOTE_ADDR', 'unknown') }}<br>
+            If you need assistance, please contact: support@resumeai.com
+        </p>
+    </div>
+</div>
+
+{% endblock %}

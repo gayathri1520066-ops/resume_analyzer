@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}ResumeAI - Smart Resume Screening{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav style="background-color: var(--white); border-bottom: 1px solid var(--gray-200); box-shadow: var(--shadow-xs); position: sticky; top: 0; z-index: 100;">
+        <div style="max-width: 1200px; margin: 0 auto; padding: var(--spacing-md) var(--spacing-lg); display: flex; justify-content: space-between; align-items: center;">
+            <!-- Logo -->
+            <a href="/" style="font-size: var(--text-2xl); font-weight: 700; color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: var(--spacing-sm);">
+                <span style="font-size: 24px;">🤖</span> ResumeAI
+            </a>
+            
+            <!-- Navigation Links -->
+            <div style="display: flex; gap: var(--spacing-lg); align-items: center;">
+                <a href="/" class="nav-link" style="color: var(--gray-700); text-decoration: none; font-weight: 500; transition: color var(--transition-fast);">
+                    📤 Analyze
+                </a>
+                <a href="/dashboard" class="nav-link" style="color: var(--gray-700); text-decoration: none; font-weight: 500; transition: color var(--transition-fast);">
+                    📊 Dashboard
+                </a>
+                <a href="/candidates" class="nav-link" style="color: var(--gray-700); text-decoration: none; font-weight: 500; transition: color var(--transition-fast);">
+                    👥 Candidates
+                </a>
+                <a href="/job-match" class="nav-link" style="color: var(--gray-700); text-decoration: none; font-weight: 500; transition: color var(--transition-fast);">
+                    🎯 Job Match
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main style="max-width: 1200px; margin: 0 auto; padding: var(--spacing-xl) var(--spacing-lg);">
+        {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer style="background-color: var(--gray-900); color: var(--white); padding: var(--spacing-2xl) var(--spacing-lg); margin-top: var(--spacing-2xl); text-align: center;">
+        <p style="margin-bottom: var(--spacing-md);">
+            ResumeAI © 2026 - AI-Powered Resume Screening Platform
+        </p>
+        <p style="color: var(--gray-400); font-size: var(--text-sm);">
+            Intelligent resume analysis, role matching, and recruitment insights.
+        </p>
+    </footer>
+
+    <style>
+        .nav-link:hover {
+            color: var(--primary) !important;
+        }
+    </style>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

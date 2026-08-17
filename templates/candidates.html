@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}All Candidates - ResumeAI{% endblock %}
+
+{% block content %}
+
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-lg);">
+    <h1 style="margin: 0;">👥 All Candidates</h1>
+    <a href="/" class="btn btn-primary">📤 Upload Resume</a>
+</div>
+
+<!-- Search & Filter Section -->
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <form method="GET" action="/candidates" style="display: grid; gap: var(--spacing-lg);">
+        <!-- Search -->
+        <div>
+            <label class="form-label">Search Candidates</label>
+            <input type="text" name="search" placeholder="Search by name, email, or skills..." 
+                   value="{{ search_term }}" style="width: 100%;">
+        </div>
+
+        <!-- Filter Grid -->
+        <div class="grid-2">
+            <!-- Role Filter -->
+            <div>
+                <label class="form-label">Filter by Role</label>
+                <select name="role" style="width: 100%;">
+                    <option value="">All Roles</option>
+                    {% for role in all_roles %}
+                    <option value="{{ role }}" {% if role_filter == role %}selected{% endif %}>
+                        {{ role }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Score Filter -->
+            <div>
+                <label class="form-label">Filter by Score</label>
+                <select name="score" style="width: 100%;">
+                    <option value="">All Scores</option>
+                    <option value="90+" {% if score_filter == '90+' %}selected{% endif %}>90+ (Excellent)</option>
+                    <option value="75-89" {% if score_filter == '75-89' %}selected{% endif %}>75-89 (Good)</option>
+                    <option value="60-74" {% if score_filter == '60-74' %}selected{% endif %}>60-74 (Moderate)</option>
+                    <option value="below60" {% if score_filter == 'below60' %}selected{% endif %}>Below 60 (Low)</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Sort & Actions -->
+        <div class="grid-2">
+            <!-- Sort -->
+            <div>
+                <label class="form-label">Sort by</label>
+                <select name="sort" style="width: 100%;">
+                    <option value="newest" {% if sort_by == 'newest' %}selected{% endif %}>Newest First</option>
+                    <option value="highest" {% if sort_by == 'highest' %}selected{% endif %}>Highest Score</option>
+                    <option value="lowest" {% if sort_by == 'lowest' %}selected{% endif %}>Lowest Score</option>
+                    <option value="oldest" {% if sort_by == 'oldest' %}selected{% endif %}>Oldest First</option>
+                    <option value="name" {% if sort_by == 'name' %}selected{% endif %}>Name (A-Z)</option>
+                </select>
+            </div>
+
+            <!-- Buttons -->
+            <div style="display: flex; gap: var(--spacing-md); align-items: flex-end;">
+                <button type="submit" class="btn btn-primary" style="flex: 1;">🔍 Search</button>
+                <a href="/candidates" class="btn btn-secondary" style="flex: 1;">✕ Clear</a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Candidates Table -->
+{% if candidates %}
+    <div class="card">
+        <table style="width: 100%; font-size: var(--text-sm); border-collapse: collapse;">
+            <thead>
+                <tr>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Name</th>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Email</th>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Role</th>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Score</th>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Skills</th>
+                    <th style="padding: var(--spacing-md); background-color: var(--gray-100); text-align: left; font-weight: 600;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for candidate in candidates %}
+                <tr style="border-bottom: 1px solid var(--gray-200);">
+                    <td style="padding: var(--spacing-md);"><strong>{{ candidate[1] or "—" }}</strong></td>
+                    <td style="padding: var(--spacing-md);">
+                        {% if candidate[2] %}
+                        <a href="mailto:{{ candidate[2] }}" style="color: var(--primary);">{{ candidate[2] }}</a>
+                        {% else %}
+                        <span style="color: var(--gray-500);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: var(--spacing-md);">
+                        {% if candidate[11] %}
+                        <span class="badge badge-primary">{{ candidate[11] }}</span>
+                        {% else %}
+                        <span style="color: var(--gray-500);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: var(--spacing-md);">
+                        {% set score = candidate[12] or 0 %}
+                        <span class="badge 
+                            {% if score >= 90 %}badge-success
+                            {% elif score >= 75 %}badge-primary
+                            {% elif score >= 60 %}badge-warning
+                            {% else %}badge-error{% endif %}">
+                            {{ score|int }}%
+                        </span>
+                    </td>
+                    <td style="padding: var(--spacing-md); font-size: var(--text-xs);">
+                        {% if candidate[8] %}
+                            {% set skills = candidate[8].split(',')[:2] %}
+                            {% for skill in skills %}
+                            <span class="tag" style="font-size: 11px; padding: 2px 8px;">{{ skill.strip() }}</span>
+                            {% endfor %}
+                            {% if candidate[8].split(',')|length > 2 %}
+                            <span class="tag" style="font-size: 11px; padding: 2px 8px;">+{{ candidate[8].split(',')|length - 2 }}</span>
+                            {% endif %}
+                        {% else %}
+                        <span style="color: var(--gray-500);">—</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: var(--spacing-md);">
+                        <a href="/candidate/{{ candidate[0] }}" class="btn btn-small btn-primary">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div style="text-align: center; margin-top: var(--spacing-lg); color: var(--gray-600);">
+        <p>Showing {{ candidates|length }} candidate(s)</p>
+    </div>
+
+{% else %}
+    <div class="card">
+        <div class="empty-state">
+            <div style="font-size: 48px; margin-bottom: var(--spacing-md); opacity: 0.5;">📭</div>
+            <h3>No Candidates Found</h3>
+            <p>No candidates match your search criteria.</p>
+            <a href="/candidates" class="btn btn-primary" style="margin-top: var(--spacing-lg);">Clear Filters</a>
+            <a href="/" class="btn btn-secondary" style="margin-top: var(--spacing-lg); margin-left: var(--spacing-md);">Upload Resume</a>
+        </div>
+    </div>
+{% endif %}
+
+{% endblock %}

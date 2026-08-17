@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Candidate Profile - ResumeAI{% endblock %}
+
+{% block content %}
+
+<!-- Back Button -->
+<div style="margin-bottom: var(--spacing-lg);">
+    <a href="/candidates" style="color: var(--primary); text-decoration: none; display: inline-flex; align-items: center; gap: var(--spacing-xs);">
+        ← Back to Candidates
+    </a>
+</div>
+
+<!-- Candidate Profile Section -->
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h2 style="margin: 0;">{{ candidate[1] or "Candidate" }}</h2>
+        <div style="color: var(--gray-600); font-size: var(--text-sm); margin-top: var(--spacing-sm);">
+            {% if candidate[2] %}<a href="mailto:{{ candidate[2] }}">{{ candidate[2] }}</a>{% endif %}
+            {% if candidate[3] %} • {{ candidate[3] }}{% endif %}
+            {% if candidate[5] %} • {{ candidate[5] }}{% endif %}
+        </div>
+    </div>
+
+    <div class="card-body">
+        <div class="grid-2">
+            <div>
+                <h4 style="color: var(--gray-700);">Education</h4>
+                <p style="margin: 0;">{{ candidate[6] or "Not specified" }}</p>
+            </div>
+            <div>
+                <h4 style="color: var(--gray-700);">Degree</h4>
+                <p style="margin: 0;">{{ candidate[7] or "Not specified" }}</p>
+            </div>
+            <div>
+                <h4 style="color: var(--gray-700);">Graduation Year</h4>
+                <p style="margin: 0;">{{ candidate[10] or "Not specified" }}</p>
+            </div>
+            <div>
+                <h4 style="color: var(--gray-700);">Upload Date</h4>
+                <p style="margin: 0;">{{ candidate[6]|safe if candidate[6] else "—" }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Match Score Visualization -->
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h3 style="margin: 0;">Match Score & Analysis</h3>
+    </div>
+    <div class="card-body">
+        <!-- Large Score Display -->
+        <div style="text-align: center; padding: var(--spacing-xl) 0; background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white; border-radius: var(--radius-xl); margin-bottom: var(--spacing-lg);">
+            <div style="font-size: 64px; font-weight: 700;">{{ candidate[12]|int or 0 }}%</div>
+            <div style="font-size: 18px; margin-top: var(--spacing-md);">
+                {% if candidate[12] >= 90 %}Excellent Match ⭐⭐⭐
+                {% elif candidate[12] >= 75 %}Good Match ⭐⭐
+                {% elif candidate[12] >= 60 %}Moderate Match ⭐
+                {% else %}Poor Match{% endif %}
+            </div>
+            <div style="font-size: 14px; opacity: 0.9; margin-top: var(--spacing-sm);">For {{ candidate[11] or "—" }}</div>
+        </div>
+
+        <!-- Score Breakdown -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: var(--spacing-lg);">
+            <div style="text-align: center; padding: var(--spacing-lg); background-color: var(--info-light); border-radius: var(--radius-lg);">
+                <div style="font-size: 28px; font-weight: 700; color: var(--info);">85%</div>
+                <div style="font-size: var(--text-sm); color: var(--gray-700); margin-top: var(--spacing-sm);">Skills Fit</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background-color: var(--success-light); border-radius: var(--radius-lg);">
+                <div style="font-size: 28px; font-weight: 700; color: var(--success);">75%</div>
+                <div style="font-size: var(--text-sm); color: var(--gray-700); margin-top: var(--spacing-sm);">Education Fit</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background-color: var(--warning-light); border-radius: var(--radius-lg);">
+                <div style="font-size: 28px; font-weight: 700; color: var(--warning);">72%</div>
+                <div style="font-size: var(--text-sm); color: var(--gray-700); margin-top: var(--spacing-sm);">Experience Fit</div>
+            </div>
+            <div style="text-align: center; padding: var(--spacing-lg); background-color: #fce7f3; border-radius: var(--radius-lg);">
+                <div style="font-size: 28px; font-weight: 700; color: #db2777;">80%</div>
+                <div style="font-size: var(--text-sm); color: var(--gray-700); margin-top: var(--spacing-sm);">Resume Quality</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recommended Roles -->
+{% if all_roles %}
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h3 style="margin: 0;">Recommended Roles</h3>
+    </div>
+    <div class="card-body">
+        <div class="grid-2">
+            {% for role in all_roles[:5] %}
+            <div class="card" style="background-color: var(--gray-50);">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--spacing-md);">
+                    <h4 style="margin: 0;">{{ role.role }}</h4>
+                    <span class="badge badge-primary">{{ role.score|int }}%</span>
+                </div>
+                {% if role.matching_skills %}
+                <div style="font-size: var(--text-sm); color: var(--gray-600);">
+                    <strong>Matching Skills:</strong>
+                    <div style="margin-top: var(--spacing-sm); display: flex; flex-wrap: wrap; gap: var(--spacing-xs);">
+                        {% for skill in role.matching_skills[:3] %}
+                        <span style="background: var(--success-light); color: var(--success); padding: 4px 8px; border-radius: var(--radius-full); font-size: var(--text-xs);">
+                            ✓ {{ skill }}
+                        </span>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Detected Skills -->
+{% if skill_strengths %}
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h3 style="margin: 0;">✓ Skill Strengths</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: flex; flex-wrap: wrap; gap: var(--spacing-sm);">
+            {% for skill in skill_strengths %}
+            <span class="badge badge-success" style="background-color: var(--success-light); color: var(--success);">
+                ✓ {{ skill }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Skill Gaps -->
+{% if skill_gaps %}
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h3 style="margin: 0; color: var(--warning);">⚠ Skill Gaps</h3>
+    </div>
+    <div class="card-body">
+        <ul style="margin: 0; padding-left: var(--spacing-lg);">
+            {% for gap in skill_gaps %}
+            <li style="margin-bottom: var(--spacing-sm);">
+                <strong>{{ gap }}</strong>
+                <div style="font-size: var(--text-sm); color: var(--gray-600); margin-top: 4px;">Recommended to acquire for better role fit</div>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endif %}
+
+<!-- Resume Improvement Suggestions -->
+{% if resume_suggestions %}
+<div class="card" style="margin-bottom: var(--spacing-lg);">
+    <div class="card-header">
+        <h3 style="margin: 0;">💡 Resume Improvement Suggestions</h3>
+    </div>
+    <div class="card-body">
+        {% for suggestion in resume_suggestions %}
+        <div class="alert 
+            {% if suggestion.type == 'success' %}alert-success
+            {% elif suggestion.type == 'warning' %}alert-warning
+            {% else %}alert-info{% endif %}" 
+            style="margin-bottom: var(--spacing-md); display: flex; align-items: flex-start; gap: var(--spacing-md);">
+            <div style="font-size: 18px; flex-shrink: 0;">
+                {% if suggestion.type == 'success' %}✓
+                {% elif suggestion.type == 'warning' %}⚠
+                {% else %}💡{% endif %}
+            </div>
+            <div>{{ suggestion.message }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- Actions -->
+<div class="card">
+    <div class="card-footer" style="border: none; padding: 0;">
+        <a href="/" class="btn btn-secondary">📤 Upload Another Resume</a>
+        <a href="/candidates" class="btn btn-primary">👥 Back to Candidates</a>
+    </div>
+</div>
+
+{% endblock %}
